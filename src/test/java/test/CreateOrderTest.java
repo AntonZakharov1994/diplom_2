@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.List;
+import static org.apache.http.HttpStatus.*;
 
 import static org.hamcrest.Matchers.*;
 
@@ -34,16 +34,7 @@ public class CreateOrderTest {
         var loginResponse = userSteps.loginUser(loginData);
         this.accessToken = loginResponse.jsonPath().getString("accessToken");
 
-        var ingredientsResponse = io.restassured.RestAssured.given()
-                .log().ifValidationFails()
-                .when()
-                .get("/api/ingredients");
-
-        List<String> uuids = ingredientsResponse.jsonPath().getList("data._id");
-        if (uuids.isEmpty()) {
-            throw new IllegalStateException("Не удалось получить ни одного ингредиента из API");
-        }
-        this.validIngredientUuid = uuids.get(0);
+        this.validIngredientUuid = orderSteps.getFirstIngredientUuid();
     }
 
 
@@ -55,7 +46,7 @@ public class CreateOrderTest {
         var response = orderSteps.createOrder(accessToken, order);
 
         response.then()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("success", is(true))
                 .body("order.number", notNullValue());
     }
@@ -67,7 +58,7 @@ public class CreateOrderTest {
         var response = orderSteps.createOrder(accessToken, order);
 
         response.then()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .body("success", is(false))
                 .body("message", equalTo("Ingredient ids must be provided"));
     }
@@ -79,7 +70,7 @@ public class CreateOrderTest {
         var response = orderSteps.createOrderUnauthorized(order);
 
         response.then()
-                .statusCode(200);
+                .statusCode(SC_OK);
 
     }
 
@@ -90,7 +81,7 @@ public class CreateOrderTest {
         var response = orderSteps.createOrder(accessToken, order);
 
         response.then()
-                .statusCode(500);
+                .statusCode(SC_INTERNAL_SERVER_ERROR);
 
     }
     @After

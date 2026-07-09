@@ -1,6 +1,6 @@
 package test;
 
-
+import static org.apache.http.HttpStatus.*;
 import data.UserModel;
 import data.CreateUserSteps;
 import io.qameta.allure.Description;
@@ -9,14 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.hamcrest.Matchers.*;
 
-public class CreateUserTest {
+public class CreateUserTest extends BaseApiTest {
 
     private CreateUserSteps steps;
     private String accessToken;
 
     @Before
     public void setUp() {
-        io.restassured.RestAssured.baseURI = "https://stellarburgers.education-services.ru";
 
         steps = new CreateUserSteps();
         accessToken = null;
@@ -33,7 +32,7 @@ public class CreateUserTest {
         var response = steps.createUser(user);
 
         response.then()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("success", is(true));
 
         accessToken = response.jsonPath().getString("accessToken");
@@ -46,13 +45,13 @@ public class CreateUserTest {
         UserModel user = new UserModel(email, "Password123", "Dup User");
 
         var firstResponse = steps.createUser(user);
-        firstResponse.then().statusCode(200).body("success", is(true));
+        firstResponse.then().statusCode(SC_OK).body("success", is(true));
         String token = firstResponse.jsonPath().getString("accessToken");
 
         var secondResponse = steps.createUser(user);
 
         secondResponse.then()
-                .statusCode(403)
+                .statusCode(SC_FORBIDDEN)
                 .body("message", notNullValue());
 
         accessToken = token;
@@ -66,7 +65,7 @@ public class CreateUserTest {
         var response = steps.createUser(user);
 
         response.then()
-                .statusCode(403)
+                .statusCode(SC_FORBIDDEN)
                 .body("message", notNullValue());
     }
     @Description("Создание пользователя с пустым паролем")
@@ -77,7 +76,7 @@ public class CreateUserTest {
 
         var response = steps.createUser(user);
         response.then()
-                .statusCode(403)
+                .statusCode(SC_FORBIDDEN)
                 .body("message", notNullValue());
     }
     @Description("Создание пользователя с пустым именем")
@@ -87,7 +86,7 @@ public class CreateUserTest {
         UserModel user = new UserModel(email, "Password123", "");
         var response = steps.createUser(user);
         response.then()
-                .statusCode(403)
+                .statusCode(SC_FORBIDDEN)
                 .body("message", notNullValue());
     }
 
